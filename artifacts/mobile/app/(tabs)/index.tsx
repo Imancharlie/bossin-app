@@ -76,7 +76,7 @@ export default function DashboardScreen() {
   const { organization: org } = data;
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 + 68 : 68 + insets.bottom;
+  const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
   const hPad = isNarrow ? 14 : 16;
 
   return (

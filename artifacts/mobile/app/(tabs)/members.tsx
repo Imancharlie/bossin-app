@@ -32,7 +32,7 @@ export default function MembersScreen() {
   const isNarrow = width < 380;
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 + 68 : 68 + insets.bottom;
+  const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
 
   const filtered = useMemo(() => {
     let list = data.members;

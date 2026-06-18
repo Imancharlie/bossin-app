@@ -63,13 +63,13 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
-          height: isWeb ? 84 : 68,
-          paddingBottom: isWeb ? 34 : 10,
-          paddingTop: 8,
+          height: isWeb ? 90 : 78,
+          paddingBottom: isWeb ? 36 : 18,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 10,
+          fontSize: 11,
         },
         tabBarBackground: () =>
           isIOS ? (
@@ -87,35 +87,35 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <Feather name="home" size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="members"
         options={{
           title: "Members",
-          tabBarIcon: ({ color }) => <Feather name="users" size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="transactions"
         options={{
           title: "Transactions",
-          tabBarIcon: ({ color }) => <Feather name="credit-card" size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="credit-card" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: "Reports",
-          tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color }) => <Feather name="settings" size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color} />,
         }}
       />
     </Tabs>

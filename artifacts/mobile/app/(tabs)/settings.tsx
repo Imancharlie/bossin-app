@@ -59,7 +59,7 @@ export default function SettingsScreen() {
   const [target, setTarget] = useState(data.organization.target.toString());
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 + 68 : 68 + insets.bottom;
+  const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
 
   const handleSaveOrg = async () => {
     await updateOrganization({
