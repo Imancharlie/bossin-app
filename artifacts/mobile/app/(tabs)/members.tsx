@@ -5,9 +5,11 @@ import {
   FlatList,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,10 +24,12 @@ type FilterType = "all" | "complete" | "incomplete" | "not_started";
 export default function MembersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { data, completeCount, incompleteCount, notStartedCount, refreshData } = useData();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [refreshing, setRefreshing] = useState(false);
+  const isNarrow = width < 380;
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 + 68 : 68 + insets.bottom;
@@ -58,23 +62,28 @@ export default function MembersScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: topPad + 16 }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: topPad + 12, paddingHorizontal: isNarrow ? 14 : 16 }]}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.headerTitle}>Members</Text>
-            <Text style={styles.headerSub}>{data.members.length} total members</Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.headerTitle, { fontSize: isNarrow ? 16 : 18 }]}>Members</Text>
+            <Text style={[styles.headerSub, { fontSize: isNarrow ? 11 : 12 }]}>{data.members.length} total members</Text>
           </View>
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => router.push("/add-member")}
             activeOpacity={0.8}
           >
-            <Feather name="user-plus" size={18} color="#fff" />
+            <Feather name="user-plus" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Filter pills */}
-        <View style={styles.filterRow}>
+        {/* Filter pills — horizontal scroll so they never wrap */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          style={{ marginHorizontal: -4 }}
+        >
           {FILTERS.map((f) => (
             <TouchableOpacity
               key={f.key}
@@ -90,6 +99,7 @@ export default function MembersScreen() {
               <Text
                 style={[
                   styles.filterText,
+                  { fontSize: isNarrow ? 10 : 11 },
                   filter === f.key ? { color: colors.primary } : { color: "rgba(255,255,255,0.9)" },
                 ]}
               >
@@ -104,6 +114,7 @@ export default function MembersScreen() {
                 <Text
                   style={[
                     styles.filterCountText,
+                    { fontSize: isNarrow ? 9 : 10 },
                     { color: filter === f.key ? f.color : "rgba(255,255,255,0.9)" },
                   ]}
                 >
@@ -112,7 +123,7 @@ export default function MembersScreen() {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {/* Search */}
@@ -123,7 +134,7 @@ export default function MembersScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: bottomPad }}
+        contentContainerStyle={{ paddingHorizontal: isNarrow ? 12 : 14, paddingTop: 4, paddingBottom: bottomPad }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
@@ -147,12 +158,12 @@ export default function MembersScreen() {
 
       {/* Daily collection FAB */}
       <TouchableOpacity
-        style={[styles.collectionFab, { backgroundColor: colors.accent, bottom: bottomPad + 12 }]}
+        style={[styles.collectionFab, { backgroundColor: colors.accent, bottom: bottomPad + 10 }]}
         onPress={() => router.push("/daily-collection")}
         activeOpacity={0.85}
       >
-        <Feather name="zap" size={18} color="#fff" />
-        <Text style={styles.collectionFabText}>Daily Collection</Text>
+        <Feather name="zap" size={15} color="#fff" />
+        <Text style={[styles.collectionFabText, { fontSize: isNarrow ? 11 : 12 }]}>Daily Collection</Text>
       </TouchableOpacity>
     </View>
   );
@@ -160,31 +171,32 @@ export default function MembersScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 16 },
-  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
-  headerTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 2 },
-  headerSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
-  addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
-  filterRow: { flexDirection: "row", gap: 8 },
-  filterPill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
-  filterText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  header: { paddingBottom: 14 },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+  headerLeft: { flex: 1, marginRight: 10 },
+  headerTitle: { fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 2 },
+  headerSub: { fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  filterRow: { flexDirection: "row", gap: 7, paddingHorizontal: 4 },
+  filterPill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  filterText: { fontFamily: "Inter_600SemiBold" },
   filterCount: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 10 },
-  filterCountText: { fontSize: 10, fontFamily: "Inter_700Bold" },
-  searchWrap: { paddingHorizontal: 16, paddingVertical: 10 },
+  filterCountText: { fontFamily: "Inter_700Bold" },
+  searchWrap: { paddingHorizontal: 14, paddingVertical: 8 },
   collectionFab: {
     position: "absolute",
-    right: 16,
+    right: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 28,
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 26,
     shadowColor: "#F59E0B",
     shadowOpacity: 0.35,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
-  collectionFabText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 },
+  collectionFabText: { color: "#fff", fontFamily: "Inter_700Bold" },
 });

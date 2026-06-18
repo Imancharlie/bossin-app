@@ -3,13 +3,13 @@ import { router } from "expo-router";
 import React, { useCallback, useRef } from "react";
 import {
   Animated,
-  FlatList,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,28 +27,32 @@ function ProgressBar({ value, color, bg }: { value: number; color: string; bg: s
     </View>
   );
 }
-
 const pbStyles = StyleSheet.create({
-  track: { height: 8, borderRadius: 4, overflow: "hidden", marginVertical: 8 },
-  fill: { height: "100%", borderRadius: 4 },
+  track: { height: 6, borderRadius: 3, overflow: "hidden", marginVertical: 7 },
+  fill: { height: "100%", borderRadius: 3 },
 });
 
 function QuickAction({ icon, label, onPress, color }: { icon: string; label: string; onPress: () => void; color: string }) {
   const colors = useColors();
+  const { width } = useWindowDimensions();
+  const isNarrow = width < 380;
   return (
-    <TouchableOpacity style={[qaStyles.btn, { backgroundColor: color + "15", borderColor: color + "30" }]} onPress={onPress} activeOpacity={0.75}>
-      <View style={[qaStyles.icon, { backgroundColor: color + "25" }]}>
-        <Feather name={icon as any} size={18} color={color} />
+    <TouchableOpacity
+      style={[qaStyles.btn, { backgroundColor: color + "15", borderColor: color + "30", padding: isNarrow ? 10 : 12 }]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <View style={[qaStyles.icon, { backgroundColor: color + "25", width: isNarrow ? 34 : 38, height: isNarrow ? 34 : 38, borderRadius: isNarrow ? 10 : 11 }]}>
+        <Feather name={icon as any} size={isNarrow ? 15 : 17} color={color} />
       </View>
-      <Text style={[qaStyles.label, { color: colors.foreground }]}>{label}</Text>
+      <Text style={[qaStyles.label, { color: colors.foreground, fontSize: isNarrow ? 9 : 10 }]} numberOfLines={2}>{label}</Text>
     </TouchableOpacity>
   );
 }
-
 const qaStyles = StyleSheet.create({
-  btn: { alignItems: "center", gap: 8, padding: 14, borderRadius: 14, flex: 1, borderWidth: 1 },
-  icon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  label: { fontSize: 11, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+  btn: { alignItems: "center", gap: 6, borderRadius: 12, flex: 1, borderWidth: 1 },
+  icon: { alignItems: "center", justifyContent: "center" },
+  label: { fontFamily: "Inter_600SemiBold", textAlign: "center" },
 });
 
 export default function DashboardScreen() {
@@ -56,8 +60,10 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { data, totalCollected, totalExpenses, progress, completeCount, refreshData, isLoading } = useData();
+  const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = React.useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const isNarrow = width < 380;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -69,32 +75,37 @@ export default function DashboardScreen() {
   const balance = totalCollected - totalExpenses;
   const { organization: org } = data;
 
-  const headerBg = scrollY.interpolate({ inputRange: [0, 60], outputRange: [colors.primary, colors.primary], extrapolate: "clamp" });
-
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 + 68 : 68 + insets.bottom;
+  const hPad = isNarrow ? 14 : 16;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <Animated.View style={[styles.header, { backgroundColor: colors.primary, paddingTop: topPad + 16 }]}>
+      <Animated.View style={[styles.header, { backgroundColor: colors.primary, paddingTop: topPad + 12, paddingHorizontal: hPad }]}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.orgName}>{org.name}</Text>
-            <Text style={styles.welcome}>Welcome back, {user?.username} 👋</Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.orgName, { fontSize: isNarrow ? 14 : 16 }]} numberOfLines={1}>{org.name}</Text>
+            <Text style={[styles.welcome, { fontSize: isNarrow ? 11 : 12 }]} numberOfLines={1}>Welcome back, {user?.username} 👋</Text>
           </View>
           <TouchableOpacity
             style={styles.notifBtn}
             onPress={() => router.push("/daily-collection")}
             activeOpacity={0.8}
           >
-            <Feather name="bell" size={20} color="rgba(255,255,255,0.9)" />
+            <Feather name="bell" size={17} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
         </View>
-        {/* Balance chip */}
+
+        {/* Balance + stat cards in header */}
         <View style={styles.balanceChip}>
-          <Text style={styles.balanceLabel}>Current Balance</Text>
-          <Text style={styles.balanceValue}>
+          <Text style={[styles.balanceLabel, { fontSize: isNarrow ? 9 : 10 }]}>CURRENT BALANCE</Text>
+          <Text
+            style={[styles.balanceValue, { fontSize: isNarrow ? 20 : 23 }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+          >
             {org.currency} {balance.toLocaleString()}
           </Text>
         </View>
@@ -102,74 +113,76 @@ export default function DashboardScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: bottomPad }}
+        contentContainerStyle={{ paddingBottom: bottomPad, padding: hPad, gap: 0 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         scrollEventThrottle={16}
       >
-        {/* Stat Cards */}
-        <View style={styles.section}>
-          <View style={styles.row}>
-            <StatCard
-              label="Total Collected"
-              value={`${org.currency} ${totalCollected.toLocaleString()}`}
-              color={colors.success}
-              icon={<Feather name="trending-up" size={16} color={colors.success} />}
-            />
-            <View style={styles.gap} />
-            <StatCard
-              label="Expenses"
-              value={`${org.currency} ${totalExpenses.toLocaleString()}`}
-              color={colors.destructive}
-              icon={<Feather name="trending-down" size={16} color={colors.destructive} />}
-            />
-          </View>
+        {/* Stat Cards Row */}
+        <View style={[styles.statRow, { gap: isNarrow ? 7 : 9, marginBottom: 10, marginTop: 12 }]}>
+          <StatCard
+            label="Total Collected"
+            value={`${org.currency} ${totalCollected.toLocaleString()}`}
+            color={colors.success}
+            icon={<Feather name="trending-up" size={13} color={colors.success} />}
+          />
+          <StatCard
+            label="Expenses"
+            value={`${org.currency} ${totalExpenses.toLocaleString()}`}
+            color={colors.destructive}
+            icon={<Feather name="trending-down" size={13} color={colors.destructive} />}
+          />
+          <StatCard
+            label="Net Balance"
+            value={`${org.currency} ${balance.toLocaleString()}`}
+            color={balance >= 0 ? colors.primary : colors.warning}
+            icon={<Feather name="activity" size={13} color={balance >= 0 ? colors.primary : colors.warning} />}
+          />
+        </View>
 
-          {/* Progress */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Mission Progress</Text>
-              <Text style={[styles.progressPct, { color: colors.primary }]}>{progress.toFixed(1)}%</Text>
+        {/* Progress card */}
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 10 }]}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.foreground, fontSize: isNarrow ? 13 : 14 }]}>Mission Progress</Text>
+            <Text style={[styles.progressPct, { color: colors.primary, fontSize: isNarrow ? 15 : 17 }]}>{progress.toFixed(1)}%</Text>
+          </View>
+          <ProgressBar value={progress} color={colors.primary} bg={colors.muted} />
+          <Text style={[styles.cardSub, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {org.currency} {totalCollected.toLocaleString()} of {org.currency} {org.target.toLocaleString()} target
+          </Text>
+          <View style={[styles.statChipRow, { marginTop: 10 }]}>
+            <View style={styles.statChip}>
+              <View style={[styles.dot, { backgroundColor: colors.success }]} />
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{completeCount} Done</Text>
             </View>
-            <ProgressBar value={progress} color={colors.primary} bg={colors.muted} />
-            <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-              {org.currency} {totalCollected.toLocaleString()} / {org.currency} {org.target.toLocaleString()}
-            </Text>
-            <View style={[styles.row, { marginTop: 12 }]}>
-              <View style={styles.statChip}>
-                <View style={[styles.dot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.chipLabel, { color: colors.mutedForeground }]}>{completeCount} Complete</Text>
-              </View>
-              <View style={styles.statChip}>
-                <View style={[styles.dot, { backgroundColor: colors.warning }]} />
-                <Text style={[styles.chipLabel, { color: colors.mutedForeground }]}>{data.members.filter(m => m.paid > 0 && m.paid < m.target).length} Partial</Text>
-              </View>
-              <View style={styles.statChip}>
-                <View style={[styles.dot, { backgroundColor: colors.destructive }]} />
-                <Text style={[styles.chipLabel, { color: colors.mutedForeground }]}>{data.members.filter(m => m.paid === 0).length} Not Started</Text>
-              </View>
+            <View style={styles.statChip}>
+              <View style={[styles.dot, { backgroundColor: colors.warning }]} />
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{data.members.filter(m => m.paid > 0 && m.paid < m.target).length} Partial</Text>
+            </View>
+            <View style={styles.statChip}>
+              <View style={[styles.dot, { backgroundColor: colors.destructive }]} />
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{data.members.filter(m => m.paid === 0).length} Pending</Text>
             </View>
           </View>
+        </View>
 
-          {/* Quick Actions */}
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Actions</Text>
-          <View style={styles.row}>
-            <QuickAction icon="users" label="Daily Collection" onPress={() => router.push("/daily-collection")} color={colors.primary} />
-            <View style={styles.gap} />
-            <QuickAction icon="user-plus" label="Add Member" onPress={() => router.push("/add-member")} color={colors.secondary} />
-            <View style={styles.gap} />
-            <QuickAction icon="plus-circle" label="Add Transaction" onPress={() => router.push("/add-transaction")} color={colors.accent} />
-          </View>
+        {/* Quick Actions */}
+        <Text style={[styles.sectionTitle, { color: colors.foreground, fontSize: isNarrow ? 13 : 14 }]}>Quick Actions</Text>
+        <View style={[styles.statRow, { gap: isNarrow ? 7 : 9, marginBottom: 14 }]}>
+          <QuickAction icon="users" label={"Daily\nCollection"} onPress={() => router.push("/daily-collection")} color={colors.primary} />
+          <QuickAction icon="user-plus" label={"Add\nMember"} onPress={() => router.push("/add-member")} color={colors.secondary} />
+          <QuickAction icon="plus-circle" label={"Add\nTransaction"} onPress={() => router.push("/add-transaction")} color={colors.accent} />
+        </View>
 
-          {/* Recent Transactions */}
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Transactions</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/transactions")}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
-            </TouchableOpacity>
-          </View>
-
+        {/* Recent Transactions */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, fontSize: isNarrow ? 13 : 14, marginBottom: 0 }]}>Recent Transactions</Text>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/transactions")}>
+            <Text style={[styles.seeAll, { color: colors.primary, fontSize: isNarrow ? 11 : 12 }]}>See all</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ marginTop: 8 }}>
           {recentTx.length === 0 ? (
             <EmptyState icon="credit-card" title="No transactions yet" subtitle="Transactions you record will appear here" />
           ) : (
@@ -185,30 +198,27 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  headerTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 },
-  orgName: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 2 },
-  welcome: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)" },
-  notifBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.15)", alignItems: "center", justifyContent: "center" },
-  balanceChip: { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 14, padding: 14 },
-  balanceLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 },
-  balanceValue: { fontSize: 26, fontFamily: "Inter_700Bold", color: "#fff" },
+  header: { paddingBottom: 16 },
+  headerTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 },
+  headerLeft: { flex: 1, marginRight: 10 },
+  orgName: { fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 2 },
+  welcome: { fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)" },
+  notifBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.15)", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  balanceChip: { backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 12, padding: 12 },
+  balanceLabel: { fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.65)", letterSpacing: 0.5, marginBottom: 3 },
+  balanceValue: { fontFamily: "Inter_700Bold", color: "#fff" },
   scroll: { flex: 1 },
-  section: { padding: 16 },
-  row: { flexDirection: "row", alignItems: "stretch" },
-  gap: { width: 10 },
-  card: { borderRadius: 14, padding: 16, borderWidth: 1, marginBottom: 14, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  statRow: { flexDirection: "row", alignItems: "stretch" },
+  card: { borderRadius: 12, padding: 12, borderWidth: 1, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  progressPct: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  cardSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  statChip: { flexDirection: "row", alignItems: "center", gap: 5, flex: 1 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  chipLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10, marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 12, marginTop: 4 },
-  seeAll: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  cardTitle: { fontFamily: "Inter_600SemiBold" },
+  progressPct: { fontFamily: "Inter_700Bold" },
+  cardSub: { fontFamily: "Inter_400Regular" },
+  statChipRow: { flexDirection: "row", gap: 0, justifyContent: "space-between" },
+  statChip: { flexDirection: "row", alignItems: "center", gap: 4 },
+  dot: { width: 7, height: 7, borderRadius: 3.5 },
+  chipLabel: { fontFamily: "Inter_500Medium" },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  sectionTitle: { fontFamily: "Inter_700Bold", marginBottom: 9, marginTop: 0 },
+  seeAll: { fontFamily: "Inter_600SemiBold" },
 });
