@@ -1,55 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
-import { Tabs, router } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
-import { StyleSheet, TouchableOpacity, View, Platform } from "react-native";
+import { Tabs } from "expo-router";
+import { Platform, StyleSheet, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
-function AddButton() {
-  const colors = useColors();
-  return (
-    <TouchableOpacity
-      style={[styles.fab, { backgroundColor: colors.primary }]}
-      onPress={() => router.push("/add-transaction")}
-      activeOpacity={0.85}
-    >
-      <Feather name="plus" size={22} color="#fff" />
-    </TouchableOpacity>
-  );
-}
-
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="members">
-        <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
-        <Label>Members</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="transactions">
-        <Icon sf={{ default: "creditcard", selected: "creditcard.fill" }} />
-        <Label>Transactions</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="reports">
-        <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>Reports</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} />
-        <Label>Settings</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
-
-function ClassicTabLayout() {
+export default function TabLayout() {
   const colors = useColors();
   const isIOS = Platform.OS === "ios";
-  const isWeb = Platform.OS === "web";
 
   return (
     <Tabs
@@ -63,8 +20,8 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
-          height: isWeb ? 90 : 78,
-          paddingBottom: isWeb ? 36 : 18,
+          height: Platform.OS === "web" ? 90 : 78,
+          paddingBottom: Platform.OS === "web" ? 36 : 18,
           paddingTop: 10,
         },
         tabBarLabelStyle: {
@@ -122,25 +79,4 @@ function ClassicTabLayout() {
   );
 }
 
-export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
-}
-
-const styles = StyleSheet.create({
-  fab: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#0F766E",
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-    marginBottom: 4,
-  },
-});
+const styles = StyleSheet.create({});

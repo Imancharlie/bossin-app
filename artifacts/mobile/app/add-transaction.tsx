@@ -62,7 +62,7 @@ export default function AddTransactionScreen() {
         date: new Date().toISOString().split("T")[0],
         recordedBy: "staff",
       });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       router.back();
     } catch {
       Alert.alert("Error", "Failed to save transaction");

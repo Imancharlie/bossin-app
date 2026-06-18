@@ -138,7 +138,7 @@ export default function DailyCollectionScreen() {
         amount,
         date: new Date().toISOString().split("T")[0],
       });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       setSavedIds((prev) => new Set(prev).add(member.id));
       setTotalSaved((prev) => prev + amount);
     } catch {

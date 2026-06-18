@@ -6,15 +6,15 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Redirect, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -22,26 +22,16 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) return null;
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="member/[id]" options={{ headerShown: false, presentation: "card" }} />
-      <Stack.Screen name="add-member" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="add-transaction" options={{ headerShown: false, presentation: "modal" }} />
-      <Stack.Screen name="daily-collection" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="member/[id]" options={{ presentation: "card" }} />
+      <Stack.Screen name="add-member" options={{ presentation: "modal" }} />
+      <Stack.Screen name="add-transaction" options={{ presentation: "modal" }} />
+      <Stack.Screen name="daily-collection" options={{ presentation: "card" }} />
     </Stack>
   );
-}
-
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-  if (isLoading) return null;
-  return <>{children}</>;
 }
 
 export default function RootLayout() {
@@ -67,9 +57,7 @@ export default function RootLayout() {
           <AuthProvider>
             <DataProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
+                <RootLayoutNav />
               </GestureHandlerRootView>
             </DataProvider>
           </AuthProvider>

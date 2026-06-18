@@ -41,10 +41,10 @@ export default function LoginScreen() {
     try {
       const success = await login(username.trim(), password.trim());
       if (success) {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
         router.replace("/(tabs)");
       } else {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
         Alert.alert("Login Failed", "Invalid username or password.\n\nDemo: bossin / bossin123");
       }
     } finally {
