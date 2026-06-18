@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "qxdAHQV3VzR2V2Gy4Pj8R"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "bossin app icon"

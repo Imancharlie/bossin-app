@@ -1,0 +1,712 @@
+# BOSSIN MOBILE APP DEVELOPMENT PROMPT
+
+## Role
+
+You are a Senior React Native + Expo + TypeScript Architect and Product Designer.
+
+Your mission is to analyze the existing Bossin web application and create a production-ready mobile application that preserves its business logic while significantly improving the mobile user experience.
+
+The final product should be beautiful, scalable, intuitive, and ready for Google Play Store and Apple App Store deployment.
+
+---
+
+# Project Name
+
+Bossin
+
+Tagline:
+
+"Smart Finance Tracking for Organizations."
+
+---
+
+# Existing System
+
+Bossin is currently built using
+
+* Django Backend
+* Bootstrap 5
+* jQuery
+* SQLite/PostgreSQL support
+* Progressive Web App
+
+The backend already provides
+
+Authentication
+
+Organizations
+
+Members
+
+Transactions
+
+Payments
+
+Admin logs
+
+Statistics
+
+Excel Import
+
+Reports
+
+Role management
+
+The mobile application must consume the existing API instead of recreating backend logic.
+
+---
+
+# Product Vision
+
+Bossin is NOT just a contribution tracker.
+
+It is a comprehensive financial management system for
+
+* Churches
+* Fellowships
+* Student Organizations
+* NGOs
+* Clubs
+* Associations
+* Committees
+* Small Businesses
+
+Each organization owns its own isolated workspace.
+
+Every organization has
+
+Organization
+
+Members
+
+Staff
+
+Transactions
+
+Reports
+
+Settings
+
+Permissions
+
+Branding
+
+Data from one organization must never be visible to another organization.
+
+---
+
+# Technology
+
+Use
+
+Expo Latest
+
+React Native
+
+TypeScript
+
+Expo Router
+
+React Navigation
+
+React Query
+
+Axios
+
+NativeWind
+
+React Hook Form
+
+Zod
+
+Expo Secure Store
+
+React Native SVG
+
+React Native Reanimated
+
+Victory Native Charts
+
+Expo Notifications
+
+Expo Image
+
+Use feature-based architecture.
+
+---
+
+# Design Philosophy
+
+The application should feel like
+
+40% WhatsApp
+
+30% Notion
+
+20% Stripe
+
+10% Linear
+
+Simple
+
+Fast
+
+Professional
+
+Minimal
+
+Premium
+
+Every screen should have generous spacing and smooth animations.
+
+---
+
+# Color Palette
+
+Reuse the existing website branding.
+
+If unavailable use
+
+Primary
+
+#0F766E
+
+Secondary
+
+#14B8A6
+
+Accent
+
+#F59E0B
+
+Background
+
+#F8FAFC
+
+Success
+
+#22C55E
+
+Danger
+
+#EF4444
+
+Cards should have rounded corners and subtle shadows.
+
+---
+
+# Authentication
+
+Splash Screen
+
+Login
+
+Google Login
+
+Forgot Password
+
+Remember Me
+
+Secure JWT Storage
+
+Biometric Login
+
+Face ID
+
+Fingerprint
+
+Automatic Token Refresh
+
+Session Recovery
+
+---
+
+# Bottom Navigation
+
+Use a WhatsApp-style bottom navigation.
+
+Tabs
+
+Home
+
+Members
+
+Add
+
+Transactions
+
+Reports
+
+Settings
+
+The Add button should float above the navigation bar.
+
+---
+
+# Dashboard
+
+Display
+
+Organization Name
+
+Welcome Message
+
+Today's Collection
+
+Today's Expenses
+
+Current Balance
+
+Mission Progress
+
+Collection Progress
+
+Monthly Trend
+
+Quick Actions
+
+Recent Transactions
+
+Pending Pledges
+
+Collection Chart
+
+Expense Chart
+
+Member Statistics
+
+Pull to Refresh
+
+Animated Cards
+
+Skeleton Loading
+
+Offline Support
+
+---
+
+# Members Module
+
+Search Members
+
+Filter Members
+
+Member Profile
+
+Contribution History
+
+Remaining Balance
+
+Pledged Amount
+
+Paid Amount
+
+Contact Information
+
+Quick Call
+
+Quick SMS
+
+Quick WhatsApp
+
+Export Member History
+
+---
+
+# Transaction Module
+
+Income
+
+Expense
+
+Transfer
+
+Adjustment
+
+Each transaction contains
+
+Amount
+
+Category
+
+Date
+
+Member
+
+Description
+
+Recorded By
+
+Reference Number
+
+Attachment
+
+Notes
+
+Support
+
+Search
+
+Sort
+
+Filters
+
+Pagination
+
+Swipe Actions
+
+Edit
+
+Delete
+
+Duplicate
+
+Share
+
+---
+
+# Daily Collection Mode
+
+Create a dedicated collection interface.
+
+The finance staff should be able to
+
+Search member
+
+Enter amount
+
+Save
+
+Immediately continue to next member
+
+without returning to the dashboard.
+
+This process should require as few taps as possible.
+
+---
+
+# Reports
+
+Daily
+
+Weekly
+
+Monthly
+
+Yearly
+
+Custom Date Range
+
+Organization Summary
+
+Member Summary
+
+Income vs Expense
+
+Collection Progress
+
+Export to PDF
+
+Export to Excel
+
+Share Report
+
+Print Report
+
+---
+
+# Admin Logs
+
+View all activities
+
+Who created transaction
+
+Who edited transaction
+
+Who deleted transaction
+
+Date
+
+Time
+
+Organization
+
+Filters
+
+Search
+
+Audit Trail
+
+---
+
+# Excel Module
+
+Import Members
+
+Validate Data
+
+Preview Before Import
+
+Show Errors
+
+Update Existing Records
+
+Bulk Add
+
+Export Members
+
+Export Transactions
+
+---
+
+# Notifications
+
+Payment Recorded
+
+Target Achieved
+
+Daily Summary
+
+Monthly Summary
+
+Admin Announcement
+
+Reminder for Pending Pledges
+
+---
+
+# Settings
+
+Organization Profile
+
+Theme
+
+Language
+
+Notifications
+
+Roles
+
+Permissions
+
+Security
+
+Backup
+
+Logout
+
+---
+
+# Offline Support
+
+Allow viewing cached data without internet.
+
+Queue transactions locally.
+
+Automatically sync when internet returns.
+
+Display sync status.
+
+---
+
+# Performance
+
+Lazy Loading
+
+Memoization
+
+Optimized FlatList
+
+Pagination
+
+Image Caching
+
+Background Sync
+
+Fast Startup
+
+---
+
+# Animations
+
+Use Reanimated.
+
+Animate
+
+Cards
+
+Navigation
+
+Charts
+
+Lists
+
+Loading
+
+Buttons
+
+Modal Transitions
+
+without excessive motion.
+
+---
+
+# Empty States
+
+Instead of blank pages display friendly illustrations with
+
+"No transactions yet"
+
+"No members found"
+
+"Start by adding your first member"
+
+---
+
+# Accessibility
+
+Large touch targets
+
+Screen reader support
+
+High contrast
+
+Dynamic font scaling
+
+---
+
+# Security
+
+Secure Storage
+
+Protected Routes
+
+Role Based Access
+
+Token Refresh
+
+Request Interceptors
+
+Error Boundaries
+
+Input Validation
+
+---
+
+# Folder Structure
+
+src/
+
+app/
+
+features/
+
+components/
+
+navigation/
+
+hooks/
+
+services/
+
+store/
+
+api/
+
+constants/
+
+types/
+
+assets/
+
+utils/
+
+theme/
+
+---
+
+# Code Standards
+
+Strict TypeScript
+
+Reusable Components
+
+Custom Hooks
+
+SOLID Principles
+
+Feature-Based Architecture
+
+No Duplicate Code
+
+Well Documented
+
+Scalable
+
+Maintainable
+
+Production Ready
+
+---
+
+# Extra Mobile Features
+
+Floating Quick Add Button
+
+QR Code Member Lookup
+
+Member Avatar Support
+
+Receipt Generation
+
+Share Receipt
+
+Dark Mode
+
+Light Mode
+
+Haptic Feedback
+
+Biometric Login
+
+Animated Statistics
+
+Voice Search
+
+Search Suggestions
+
+Recent Searches
+
+---
+
+# Future Scalability
+
+Design the architecture so Bossin can later support
+
+Bank Accounts
+
+Budget Planning
+
+Loans
+
+Inventory
+
+Asset Management
+
+Payroll
+
+Multi Currency
+
+Online Payments
+
+AI Financial Insights
+
+without major restructuring.
+
+---
+
+# Goal
+
+The final product should not feel like a converted website.
+
+It should feel like a native mobile application built specifically for finance teams, while preserving every feature of the existing Bossin web application and providing a polished, premium, enterprise-grade user experience.
