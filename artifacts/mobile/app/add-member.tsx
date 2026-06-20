@@ -21,13 +21,15 @@ export default function AddMemberScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addMember, updateMember, data } = useData();
+  const org = data?.organization || { currency: "TZS" };
   const { editId } = useLocalSearchParams<{ editId?: string }>();
   const editing = data.members.find((m) => m.id === editId);
 
   const [name, setName] = useState(editing?.name ?? "");
   const [phone, setPhone] = useState(editing?.phone ?? "");
-  const [year, setYear] = useState(editing?.yearOfStudy?.toString() ?? "1");
-  const [target, setTarget] = useState(editing?.target?.toString() ?? "100000");
+  const [course, setCourse] = useState(editing?.course ?? "");
+  const [year, setYear] = useState(editing?.year?.toString() ?? "1");
+  const [pledge, setPledge] = useState(editing?.pledge?.toString() ?? "100000");
   const [saving, setSaving] = useState(false);
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
@@ -38,28 +40,31 @@ export default function AddMemberScreen() {
       Alert.alert("Error", "Member name is required");
       return;
     }
-    const targetNum = Number(target.replace(/,/g, "")) || 100000;
+    const pledgeNum = Number(pledge.replace(/,/g, "")) || 100000;
     setSaving(true);
     try {
       if (editing) {
         await updateMember(editing.id, {
           name: name.trim(),
           phone: phone.trim(),
-          yearOfStudy: Number(year) || 1,
-          target: targetNum,
+          course: course.trim(),
+          year: year,
+          pledge: pledgeNum.toString(),
         });
       } else {
         await addMember({
           name: name.trim(),
           phone: phone.trim(),
-          yearOfStudy: Number(year) || 1,
-          target: targetNum,
+          course: course.trim(),
+          year: year,
+          pledge: pledgeNum.toString(),
         });
       }
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       router.back();
-    } catch {
-      Alert.alert("Error", "Failed to save member");
+    } catch (error) {
+      console.error('[AddMember] Error saving member:', error);
+      Alert.alert("Error", "Failed to save member. Please check your connection.");
     } finally {
       setSaving(false);
     }
@@ -121,8 +126,23 @@ export default function AddMemberScreen() {
             />
           </View>
 
+          {/* Course */}
+          <Text style={[styles.label, { color: colors.foreground }]}>Course (optional)</Text>
+          <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="book" size={16} color={colors.mutedForeground} />
+            <TextInput
+              style={[styles.input, { color: colors.foreground }]}
+              value={course}
+              onChangeText={setCourse}
+              placeholder="e.g., Computer Science"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
+          </View>
+
           {/* Year */}
-          <Text style={[styles.label, { color: colors.foreground }]}>Year of Study</Text>
+          <Text style={[styles.label, { color: colors.foreground }]}>Year</Text>
           <View style={styles.yearRow}>
             {[1, 2, 3, 4, 5].map((y) => (
               <TouchableOpacity
@@ -144,16 +164,16 @@ export default function AddMemberScreen() {
             ))}
           </View>
 
-          {/* Target */}
+          {/* Pledge */}
           <Text style={[styles.label, { color: colors.foreground }]}>
-            Contribution Target ({data.organization.currency})
+            Pledge Amount ({org.currency})
           </Text>
           <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="target" size={16} color={colors.mutedForeground} />
             <TextInput
               style={[styles.input, { color: colors.foreground }]}
-              value={target}
-              onChangeText={setTarget}
+              value={pledge}
+              onChangeText={setPledge}
               placeholder="100000"
               placeholderTextColor={colors.mutedForeground}
               keyboardType="numeric"
@@ -166,17 +186,17 @@ export default function AddMemberScreen() {
             {["50000", "100000", "150000", "200000"].map((p) => (
               <TouchableOpacity
                 key={p}
-                onPress={() => setTarget(p)}
+                onPress={() => setPledge(p)}
                 style={[
                   styles.presetBtn,
                   {
-                    backgroundColor: target === p ? colors.primary + "20" : colors.muted,
-                    borderColor: target === p ? colors.primary : colors.border,
+                    backgroundColor: pledge === p ? colors.primary + "20" : colors.muted,
+                    borderColor: pledge === p ? colors.primary : colors.border,
                   },
                 ]}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.presetText, { color: target === p ? colors.primary : colors.mutedForeground }]}>
+                <Text style={[styles.presetText, { color: pledge === p ? colors.primary : colors.mutedForeground }]}>
                   {(Number(p) / 1000).toFixed(0)}k
                 </Text>
               </TouchableOpacity>

@@ -7,10 +7,13 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useData } from "@/contexts/DataContext";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 
@@ -49,7 +52,9 @@ export default function ReportsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { data, totalCollected, totalExpenses, progress, completeCount } = useData();
+  const { user } = useAuth();
   const [period, setPeriod] = useState<Period>("monthly");
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
@@ -58,22 +63,30 @@ export default function ReportsScreen() {
 
   const monthlyData = useMemo(() => {
     return MONTHS.slice(0, new Date().getMonth() + 1).map((label, i) => {
-      const value = data.transactions
-        .filter((t) => t.type === "income" && new Date(t.date).getMonth() === i)
-        .reduce((s, t) => s + t.amount, 0);
+      const value = (data?.transactions || [])
+        .filter((t) => new Date(t.date).getMonth() === i)
+        .reduce((s, t) => s + parseFloat(t.amount || "0"), 0);
       return { label, value };
     });
-  }, [data.transactions]);
+  }, [data?.transactions]);
 
   const maxMonthly = Math.max(...monthlyData.map((d) => d.value), 1);
 
   const topMembers = useMemo(
     () =>
-      [...data.members]
-        .filter((m) => m.paid > 0)
-        .sort((a, b) => b.paid - a.paid)
+      [...(data?.members || [])]
+        .filter((m) => parseFloat(m.paid_total || "0") > 0)
+        .sort((a, b) => parseFloat(b.paid_total || "0") - parseFloat(a.paid_total || "0"))
         .slice(0, 5),
-    [data.members]
+    [data?.members]
+  );
+
+  const recentTransactions = useMemo(
+    () =>
+      [...(data?.transactions || [])]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5),
+    [data?.transactions]
   );
 
   const balance = totalCollected - totalExpenses;
@@ -84,6 +97,52 @@ export default function ReportsScreen() {
     { key: "monthly", label: "Monthly" },
     { key: "yearly", label: "Yearly" },
   ];
+
+  const handleDownload = async (type: 'members' | 'transactions' | 'report') => {
+    setDownloading(type);
+    try {
+      const orgSlug = data?.organization?.slug;
+      if (!orgSlug) {
+        Alert.alert("Error", "Organization not found");
+        setDownloading(null);
+        return;
+      }
+      let endpoint = '';
+
+      if (type === 'members') {
+        endpoint = `/orgs/${orgSlug}/export/members/excel/`;
+      } else if (type === 'transactions') {
+        endpoint = `/orgs/${orgSlug}/export/transactions/excel/`;
+      } else if (type === 'report') {
+        endpoint = `/orgs/${orgSlug}/export/report/pdf/`;
+      }
+
+      console.log('[Reports] Downloading:', type, 'endpoint:', endpoint);
+
+      // Use apiClient to make authenticated request
+      const { apiClient } = await import('@/services');
+      const response: any = await apiClient.get(endpoint);
+
+      console.log('[Reports] Download response received, type:', typeof response);
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${type}_${orgSlug}.${type === 'report' ? 'pdf' : 'xlsx'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      Alert.alert('Success', 'Download completed successfully');
+    } catch (error) {
+      console.error('[Reports] Download error:', error);
+      Alert.alert('Error', 'Failed to download. Please check your connection and try again.');
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -113,44 +172,79 @@ export default function ReportsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: bottomPad }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Download Buttons */}
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 16 }]}>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>Download Reports</Text>
+          <View style={styles.downloadRow}>
+            <TouchableOpacity
+              style={[styles.downloadBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
+              onPress={() => handleDownload('members')}
+              disabled={downloading === 'members'}
+              activeOpacity={0.75}
+            >
+              <Feather name="users" size={18} color={colors.primary} />
+              <Text style={[styles.downloadBtnText, { color: colors.primary }]}>Members</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.downloadBtn, { backgroundColor: colors.success + "15", borderColor: colors.success + "30" }]}
+              onPress={() => handleDownload('transactions')}
+              disabled={downloading === 'transactions'}
+              activeOpacity={0.75}
+            >
+              <Feather name="file-text" size={18} color={colors.success} />
+              <Text style={[styles.downloadBtnText, { color: colors.success }]}>Transactions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.downloadBtn, { backgroundColor: colors.accent + "15", borderColor: colors.accent + "30" }]}
+              onPress={() => handleDownload('report')}
+              disabled={downloading === 'report'}
+              activeOpacity={0.75}
+            >
+              <Feather name="file" size={18} color={colors.accent} />
+              <Text style={[styles.downloadBtnText, { color: colors.accent }]}>PDF Report</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Summary Cards */}
         <View style={styles.row}>
           <View style={[styles.summaryCard, { backgroundColor: colors.success + "15", borderColor: colors.success + "30", flex: 1 }]}>
             <Feather name="trending-up" size={20} color={colors.success} />
             <Text style={[styles.summaryValue, { color: colors.success }]}>
-              {data.organization.currency} {totalCollected.toLocaleString()}
+              TZS {totalCollected.toLocaleString()}
             </Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Total Income</Text>
+            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Total Collected</Text>
           </View>
           <View style={styles.gap} />
-          <View style={[styles.summaryCard, { backgroundColor: colors.destructive + "15", borderColor: colors.destructive + "30", flex: 1 }]}>
-            <Feather name="trending-down" size={20} color={colors.destructive} />
-            <Text style={[styles.summaryValue, { color: colors.destructive }]}>
-              {data.organization.currency} {totalExpenses.toLocaleString()}
+          <View style={[styles.summaryCard, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30", flex: 1 }]}>
+            <Feather name="target" size={20} color={colors.primary} />
+            <Text style={[styles.summaryValue, { color: colors.primary }]}>
+              TZS {parseFloat(data?.dashboardStats?.target_amount || "0").toLocaleString()}
             </Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Total Expenses</Text>
+            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Target Amount</Text>
           </View>
         </View>
 
-        <View style={[styles.summaryCard, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30", marginBottom: 16 }]}>
-          <View style={styles.balanceRow}>
-            <View>
-              <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Net Balance</Text>
-              <Text style={[styles.summaryValue, { color: colors.primary, fontSize: 24 }]}>
-                {data.organization.currency} {balance.toLocaleString()}
-              </Text>
-            </View>
-            <View style={[styles.progressCircle, { borderColor: colors.primary }]}>
-              <Text style={[styles.progressText, { color: colors.primary }]}>{progress.toFixed(0)}%</Text>
-            </View>
-          </View>
-          <View style={[styles.progressBar, { backgroundColor: colors.muted }]}>
-            <View style={[styles.progressFill, { width: `${Math.min(100, progress)}%` as any, backgroundColor: colors.primary }]} />
-          </View>
-          <Text style={[styles.progressCaption, { color: colors.mutedForeground }]}>
-            Target: {data.organization.currency} {data.organization.target.toLocaleString()}
-          </Text>
+        {/* Recent Transactions */}
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>Recent Transactions</Text>
+          {recentTransactions.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No transactions yet</Text>
+          ) : (
+            recentTransactions.map((tx) => (
+              <View key={tx.id} style={[styles.txRow, { borderBottomColor: colors.border }]}>
+                <View style={styles.txLeft}>
+                  <Text style={[styles.txName, { color: colors.foreground }]}>{tx.member_name || tx.note || "Transaction"}</Text>
+                  <Text style={[styles.txDate, { color: colors.mutedForeground }]}>{tx.date}</Text>
+                </View>
+                <Text style={[styles.txAmount, { color: colors.success }]}>
+                  TZS {parseFloat(tx.amount || "0").toLocaleString()}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
+
 
         {/* Monthly Chart */}
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -166,8 +260,8 @@ export default function ReportsScreen() {
           <View style={styles.memberStats}>
             {[
               { label: "Complete", count: completeCount, color: colors.success },
-              { label: "Partial", count: data.members.filter(m => m.paid > 0 && m.paid < m.target).length, color: colors.warning },
-              { label: "Not Started", count: data.members.filter(m => m.paid === 0).length, color: colors.destructive },
+              { label: "Partial", count: (data?.members || []).filter(m => parseFloat(m.paid_total || "0") > 0 && parseFloat(m.paid_total || "0") < parseFloat(m.pledge || "0")).length, color: colors.warning },
+              { label: "Not Started", count: (data?.members || []).filter(m => parseFloat(m.paid_total || "0") === 0).length, color: colors.destructive },
             ].map((s) => (
               <View key={s.label} style={styles.memberStatRow}>
                 <View style={styles.memberStatLeft}>
@@ -191,7 +285,7 @@ export default function ReportsScreen() {
                 </View>
                 <Text style={[styles.topMemberName, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>{m.name}</Text>
                 <Text style={[styles.topMemberAmount, { color: colors.success }]}>
-                  {data.organization.currency} {m.paid.toLocaleString()}
+                  TZS {parseFloat(m.paid_total || "0").toLocaleString()}
                 </Text>
               </View>
             ))}
@@ -223,6 +317,15 @@ const styles = StyleSheet.create({
   progressCaption: { fontSize: 11, fontFamily: "Inter_400Regular" },
   card: { borderRadius: 14, padding: 16, borderWidth: 1, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  downloadRow: { flexDirection: "row", gap: 10, marginTop: 12 },
+  downloadBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
+  downloadBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  emptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 20 },
+  txRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1 },
+  txLeft: { flex: 1 },
+  txName: { fontSize: 14, fontFamily: "Inter_500Medium", marginBottom: 2 },
+  txDate: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  txAmount: { fontSize: 14, fontFamily: "Inter_700Bold" },
   memberStats: { marginTop: 12, gap: 10 },
   memberStatRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   memberStatLeft: { flexDirection: "row", alignItems: "center", gap: 8 },

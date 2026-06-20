@@ -5,6 +5,10 @@
     "tsBuildInfoFile": ".tsbuildinfo",
     "baseUrl": ".",
     "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-native",
+    "lib": ["ES2015"],
     "paths": {
       "@/*": [
         "./*"

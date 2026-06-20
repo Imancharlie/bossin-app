@@ -39,13 +39,13 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const success = await login(username.trim(), password.trim());
-      if (success) {
+      const result = await login(username.trim(), password.trim());
+      if (result.success) {
         try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
         router.replace("/(tabs)");
       } else {
         try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
-        Alert.alert("Login Failed", "Invalid username or password.\n\nDemo: bossin / bossin123");
+        Alert.alert("Login Failed", result.error || "Invalid username or password");
       }
     } finally {
       setLoading(false);
@@ -173,7 +173,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Demo hint */}
+        {/* Demo hint
         <View style={[styles.demoBox, { backgroundColor: colors.accent + "15", borderColor: colors.accent + "30" }]}>
           <Feather name="info" size={12} color={colors.accent} />
           <Text style={[styles.demoText, { color: colors.mutedForeground, fontSize: isNarrow ? 11 : 12 }]}>
@@ -182,7 +182,15 @@ export default function LoginScreen() {
             {" / "}
             <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>bossin123</Text>
           </Text>
-        </View>
+        </View> */}
+
+        {/* Signup link */}
+        <TouchableOpacity style={styles.signupContainer} onPress={() => router.push("/register")} activeOpacity={0.7}>
+          <Text style={[styles.signupText, { color: colors.mutedForeground, fontSize: isNarrow ? 11 : 12 }]}>
+            Don't have an account?{" "}
+            <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -246,4 +254,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   demoText: { fontFamily: "Inter_400Regular" },
+  signupContainer: { alignItems: "center", marginTop: 8 },
+  signupText: { fontFamily: "Inter_400Regular" },
 });

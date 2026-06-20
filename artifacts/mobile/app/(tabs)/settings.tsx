@@ -53,10 +53,12 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const { data, updateOrganization } = useData();
+  const org = data?.organization || { name: "Loading...", description: "", user_role: "member" };
   const [editingOrg, setEditingOrg] = useState(false);
-  const [orgName, setOrgName] = useState(data.organization.name);
-  const [orgDesc, setOrgDesc] = useState(data.organization.description);
-  const [target, setTarget] = useState(data.organization.target.toString());
+  const [orgName, setOrgName] = useState(org.name);
+  const [orgDesc, setOrgDesc] = useState(org.description);
+  const targetAmount = data.dashboardStats?.target_amount || "0";
+  const [target, setTarget] = useState(targetAmount);
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
@@ -65,19 +67,20 @@ export default function SettingsScreen() {
     await updateOrganization({
       name: orgName,
       description: orgDesc,
-      target: Number(target.replace(/,/g, "")) || data.organization.target,
     });
     setEditingOrg(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign Out",
         style: "destructive",
         onPress: async () => {
+          console.log('[Settings] Signing out...');
           await logout();
+          console.log('[Settings] Navigating to login...');
           router.replace("/login");
         },
       },
@@ -102,7 +105,7 @@ export default function SettingsScreen() {
             <Text style={[styles.username, { color: colors.foreground }]}>{user?.username}</Text>
             <View style={[styles.roleBadge, { backgroundColor: colors.accent + "20" }]}>
               <Text style={[styles.roleText, { color: colors.accent }]}>
-                {user?.role?.toUpperCase()}
+                {data.organization.user_role?.toUpperCase() || "MEMBER"}
               </Text>
             </View>
           </View>
@@ -129,15 +132,6 @@ export default function SettingsScreen() {
                 placeholder="Description"
                 placeholderTextColor={colors.mutedForeground}
               />
-              <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Collection Target ({data.organization.currency})</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground, borderColor: colors.border }]}
-                value={target}
-                onChangeText={setTarget}
-                placeholder="Target amount"
-                placeholderTextColor={colors.mutedForeground}
-                keyboardType="numeric"
-              />
               <View style={styles.editBtns}>
                 <TouchableOpacity
                   style={[styles.editBtn, { backgroundColor: colors.muted }]}
@@ -157,20 +151,19 @@ export default function SettingsScreen() {
             <>
               <SettingRow
                 icon="briefcase"
-                label={data.organization.name}
-                subtitle={data.organization.description}
+                label={org.name}
+                subtitle={org.description}
                 onPress={() => setEditingOrg(true)}
               />
               <SettingRow
                 icon="target"
                 label="Collection Target"
-                subtitle={`${data.organization.currency} ${data.organization.target.toLocaleString()}`}
-                onPress={() => setEditingOrg(true)}
+                subtitle={`TZS ${parseFloat(targetAmount).toLocaleString()}`}
               />
               <SettingRow
                 icon="dollar-sign"
                 label="Currency"
-                subtitle={data.organization.currency}
+                subtitle="TZS"
               />
             </>
           )}
@@ -180,8 +173,8 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ACCOUNT</Text>
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <SettingRow icon="user" label="Username" subtitle={user?.username} />
-          <SettingRow icon="shield" label="Role" subtitle={user?.role} />
-          <SettingRow icon="users" label="Organization ID" subtitle={user?.organizationId} />
+          <SettingRow icon="shield" label="Role" subtitle={org.user_role || "Member"} />
+          <SettingRow icon="users" label="Organization" subtitle={org.name} />
         </View>
 
         {/* App */}

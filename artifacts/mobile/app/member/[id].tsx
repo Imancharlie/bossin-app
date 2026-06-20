@@ -25,7 +25,7 @@ export default function MemberDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, deleteMember, addTransaction } = useData();
 
-  const member = data.members.find((m) => m.id === id);
+  const member = data?.members?.find((m) => String(m.id) === String(id));
   const [payAmount, setPayAmount] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -43,17 +43,19 @@ export default function MemberDetailScreen() {
     );
   }
 
-  const remaining = Math.max(0, member.target - member.paid);
-  const progress = member.target > 0 ? Math.min(1, member.paid / member.target) : 0;
-  const memberTx = data.transactions.filter((t) => t.memberId === member.id);
-  const { currency } = data.organization;
+  const pledge = parseFloat(String(member.pledge ?? "0"));
+  const paid = parseFloat(String(member.paid_total ?? "0"));
+  const remaining = parseFloat(String(member.remaining ?? "0"));
+  const progress = pledge > 0 ? Math.min(1, paid / pledge) : 0;
+  const memberTx = data?.transactions?.filter((t) => String(t.member) === String(member.id)) || [];
+  const { currency } = data?.organization || { currency: "TZS" };
 
-  const isComplete = member.paid >= member.target;
-  const statusColor = isComplete ? colors.success : member.paid > 0 ? colors.warning : colors.destructive;
-  const statusLabel = isComplete ? "Complete" : member.paid > 0 ? "Partial" : "Not Started";
+  const isComplete = member.is_complete;
+  const statusColor = isComplete ? colors.success : member.is_incomplete ? colors.warning : colors.destructive;
+  const statusLabel = isComplete ? "Complete" : member.is_incomplete ? "Partial" : "Not Started";
 
   const avatarColors = ["#0F766E", "#7C3AED", "#DB2777", "#D97706", "#0369A1", "#16A34A"];
-  const avatarBg = avatarColors[parseInt(member.id.replace(/\D/g, "").slice(-1)) % avatarColors.length] ?? "#0F766E";
+  const avatarBg = avatarColors[Number(member.id) % avatarColors.length] ?? "#0F766E";
 
   const getInitials = (name: string) =>
     name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -67,14 +69,10 @@ export default function MemberDetailScreen() {
     setSaving(true);
     try {
       await addTransaction({
-        memberId: member.id,
-        memberName: member.name,
-        type: "income",
-        amount,
-        category: "Contribution",
-        description: `Payment from ${member.name}`,
+        memberId: Number(member.id),
+        amount: amount,
         date: new Date().toISOString().split("T")[0],
-        recordedBy: "staff",
+        note: `Payment from ${member.name}`,
       });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setPayAmount("");
@@ -129,7 +127,7 @@ export default function MemberDetailScreen() {
                 <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
               </View>
               <Text style={styles.memberName}>{member.name}</Text>
-              <Text style={styles.memberPhone}>{member.phone} · Year {member.yearOfStudy}</Text>
+              <Text style={styles.memberPhone}>{member.phone}</Text>
               <View style={[styles.statusBadge, { backgroundColor: statusColor + "30" }]}>
                 <Text style={[styles.statusText, { color: statusColor === colors.success ? "#fff" : statusColor }]}>{statusLabel}</Text>
               </View>
@@ -140,7 +138,7 @@ export default function MemberDetailScreen() {
             {/* Stats */}
             <View style={styles.statsRow}>
               <View style={[styles.statCard, { backgroundColor: colors.success + "10", borderColor: colors.success + "25" }]}>
-                <Text style={[styles.statValue, { color: colors.success }]}>{currency} {member.paid.toLocaleString()}</Text>
+                <Text style={[styles.statValue, { color: colors.success }]}>{currency} {paid.toLocaleString()}</Text>
                 <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Paid</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.destructive + "10", borderColor: colors.destructive + "25" }]}>
@@ -148,8 +146,8 @@ export default function MemberDetailScreen() {
                 <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Remaining</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{currency} {member.target.toLocaleString()}</Text>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Target</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{currency} {pledge.toLocaleString()}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Pledge</Text>
               </View>
             </View>
 
@@ -165,8 +163,7 @@ export default function MemberDetailScreen() {
             </View>
 
             {/* Quick Payment */}
-            {!isComplete && (
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>Quick Payment</Text>
                 <View style={[styles.payRow, { borderColor: colors.border, backgroundColor: colors.muted }]}>
                   <Text style={[styles.currencyLabel, { color: colors.primary }]}>{currency}</Text>
@@ -196,7 +193,6 @@ export default function MemberDetailScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-            )}
 
             {/* Transactions */}
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>

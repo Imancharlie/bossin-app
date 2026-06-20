@@ -5,8 +5,8 @@ import { useColors } from "@/hooks/useColors";
 import { Member, MemberStatus } from "@/types";
 
 function getMemberStatus(member: Member): MemberStatus {
-  if (member.paid >= member.target) return "complete";
-  if (member.paid > 0) return "incomplete";
+  if (member.is_complete) return "complete";
+  if (member.is_incomplete) return "incomplete";
   return "not_started";
 }
 
@@ -37,14 +37,16 @@ export function MemberRow({ member, index, currency, onPress }: MemberRowProps) 
   const { width } = useWindowDimensions();
   const status = getMemberStatus(member);
   const statusConfig = getStatusConfig(status, colors);
-  const remaining = Math.max(0, member.target - member.paid);
-  const progressPct = member.target > 0 ? Math.min(1, member.paid / member.target) : 0;
+  const pledge = parseFloat(String(member.pledge ?? "0"));
+  const paid = parseFloat(String(member.paid_total ?? "0"));
+  const remaining = parseFloat(String(member.remaining ?? "0"));
+  const progressPct = pledge > 0 ? Math.min(1, paid / pledge) : 0;
   const isNarrow = width < 380;
 
   const avatarColors = ["#0F766E", "#7C3AED", "#DB2777", "#D97706", "#0369A1", "#16A34A"];
-  const avatarBg = avatarColors[parseInt(member.id.replace(/\D/g, "").slice(-1)) % avatarColors.length] ?? "#0F766E";
+  const avatarBg = avatarColors[Number(member.id) % avatarColors.length] ?? "#0F766E";
 
-  const fmt = (n: number) => `${currency} ${n.toLocaleString()}`;
+  const fmt = (n: number | string | undefined) => `${currency} ${Number(n ?? 0).toLocaleString()}`;
 
   return (
     <TouchableOpacity
@@ -70,7 +72,7 @@ export function MemberRow({ member, index, currency, onPress }: MemberRowProps) 
           </View>
           <View style={styles.amounts}>
             <Text style={[styles.paid, { color: colors.success, fontSize: isNarrow ? 10 : 11 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {fmt(member.paid)}
+              {fmt(paid)}
             </Text>
             <Text style={[styles.remaining, { color: colors.destructive, fontSize: isNarrow ? 10 : 11 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               -{fmt(remaining)}

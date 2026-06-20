@@ -1,13 +1,18 @@
 {
   "expo": {
     "name": "Bossin",
-    "slug": "mobile",
+    "slug": "workspace",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "617d3799-2169-4ea3-9c3b-58110583c15b"
+      }
+    },
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",

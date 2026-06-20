@@ -7,8 +7,8 @@ import { Transaction } from "@/types";
 const CATEGORIES: Record<string, string> = {
   Contribution: "trending-up",
   "Daily Collection": "trending-up",
+  Payment: "trending-up",
   Operations: "briefcase",
-  Transfer: "repeat",
   Other: "circle",
 };
 
@@ -23,10 +23,10 @@ export function TransactionItem({ transaction, currency, onPress }: TransactionI
   const { width } = useWindowDimensions();
   const isNarrow = width < 380;
 
-  const isIncome = transaction.type === "income";
-  const isExpense = transaction.type === "expense";
+  const isIncome = transaction.member !== null; // Member transactions are income
+  const isExpense = transaction.member === null; // Non-member transactions are expenses
   const accentColor = isIncome ? colors.success : isExpense ? colors.destructive : colors.info;
-  const iconName = CATEGORIES[transaction.category] ?? "circle";
+  const iconName = isIncome ? "trending-up" : "trending-down";
 
   const dateLabel = new Date(transaction.date).toLocaleDateString("en-US", {
     month: "short",
@@ -44,10 +44,10 @@ export function TransactionItem({ transaction, currency, onPress }: TransactionI
       </View>
       <View style={styles.info}>
         <Text style={[styles.category, { color: colors.foreground, fontSize: isNarrow ? 12 : 13 }]} numberOfLines={1}>
-          {transaction.category}
+          {transaction.member_name ?? "General Transaction"}
         </Text>
         <Text style={[styles.desc, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]} numberOfLines={1}>
-          {transaction.memberName ?? transaction.description}
+          {transaction.note ?? "No note"}
         </Text>
       </View>
       <View style={styles.right}>

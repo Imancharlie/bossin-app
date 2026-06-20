@@ -17,14 +17,13 @@ import { SearchBar } from "@/components/SearchBar";
 import { TransactionItem } from "@/components/TransactionItem";
 import { useData } from "@/contexts/DataContext";
 import { useColors } from "@/hooks/useColors";
-import { TransactionType } from "@/types";
-
-type FilterType = "all" | TransactionType;
+type FilterType = "all" | "income";
 
 export default function TransactionsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { data, totalCollected, totalExpenses, deleteTransaction, refreshData } = useData();
+  const org = data?.organization || { currency: "TZS" };
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [refreshing, setRefreshing] = useState(false);
@@ -34,14 +33,16 @@ export default function TransactionsScreen() {
 
   const filtered = useMemo(() => {
     let list = data.transactions;
-    if (filter !== "all") list = list.filter((t) => t.type === filter);
+    if (filter !== "all") {
+      if (filter === "income") list = list.filter((t) => t.member !== null);
+      list = list.filter((t) => t.member === null);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (t) =>
-          t.category.toLowerCase().includes(q) ||
-          (t.memberName ?? "").toLowerCase().includes(q) ||
-          t.description.toLowerCase().includes(q)
+          (t.member_name ?? "").toLowerCase().includes(q) ||
+          (t.note ?? "").toLowerCase().includes(q)
       );
     }
     return list;
@@ -57,7 +58,7 @@ export default function TransactionsScreen() {
     { key: "all", label: "All", color: colors.primary },
     { key: "income", label: "Income", color: colors.success },
     { key: "expense", label: "Expense", color: colors.destructive },
-    { key: "transfer", label: "Transfer", color: colors.info },
+    
   ];
 
   return (
@@ -67,7 +68,7 @@ export default function TransactionsScreen() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>Transactions</Text>
-            <Text style={styles.headerSub}>{data.transactions.length} total records</Text>
+            <Text style={styles.headerSub}>{data?.transactions?.length || 0} total records</Text>
           </View>
           <TouchableOpacity
             style={styles.addBtn}
@@ -139,7 +140,7 @@ export default function TransactionsScreen() {
           />
         }
         renderItem={({ item }) => (
-          <TransactionItem transaction={item} currency={data.organization.currency} />
+          <TransactionItem transaction={item} currency={org.currency} />
         )}
       />
     </View>

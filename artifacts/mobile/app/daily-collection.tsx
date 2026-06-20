@@ -35,10 +35,9 @@ function CollectionRow({ member, index, currency, onSave, saved }: CollectionRow
   const colors = useColors();
   const [amount, setAmount] = useState("");
   const inputRef = useRef<TextInput>(null);
-  const remaining = Math.max(0, member.target - member.paid);
-
-  const avatarColors = ["#0F766E", "#7C3AED", "#DB2777", "#D97706", "#0369A1", "#16A34A"];
-  const avatarBg = avatarColors[parseInt(member.id.replace(/\D/g, "").slice(-1)) % avatarColors.length] ?? "#0F766E";
+  const pledge = parseFloat(member.pledge || "0");
+  const paidTotal = parseFloat(member.paid_total || "0");
+  const remaining = Math.max(0, pledge - paidTotal);
 
   const handleSave = () => {
     const num = Number(amount.replace(/,/g, ""));
@@ -60,18 +59,17 @@ function CollectionRow({ member, index, currency, onSave, saved }: CollectionRow
         },
       ]}
     >
-      <View style={[styles.collAvatar, { backgroundColor: avatarBg }]}>
-        <Text style={styles.collAvatarText}>{getInitials(member.name)}</Text>
-      </View>
       <View style={styles.collInfo}>
         <Text style={[styles.collIndex, { color: colors.mutedForeground }]}>{index}.</Text>
         <View style={styles.collDetails}>
-          <Text style={[styles.collName, { color: colors.foreground }]} numberOfLines={1}>
-            {member.name}
-          </Text>
+          <TouchableOpacity onPress={() => router.push(`/member/${member.id}`)}>
+            <Text style={[styles.collName, { color: colors.foreground }]} numberOfLines={1}>
+              {member.name}
+            </Text>
+          </TouchableOpacity>
           <View style={styles.collMeta}>
             <Text style={[styles.collPaid, { color: colors.success }]}>
-              {currency} {member.paid.toLocaleString()}
+              {currency} {paidTotal.toLocaleString()}
             </Text>
             <Text style={[styles.collRemaining, { color: remaining > 0 ? colors.destructive : colors.mutedForeground }]}>
               -{currency} {remaining.toLocaleString()}
@@ -115,6 +113,7 @@ export default function DailyCollectionScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { data, recordCollection } = useData();
+  const org = data?.organization || { currency: "TZS" };
   const [search, setSearch] = useState("");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [totalSaved, setTotalSaved] = useState(0);
@@ -125,13 +124,18 @@ export default function DailyCollectionScreen() {
 
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
-    let list = data.members.filter((m) => m.paid < m.target);
-    if (q) list = list.filter((m) => m.name.toLowerCase().includes(q) || m.phone.includes(q));
+    let list = (data?.members || []).filter((m) => {
+      const pledge = parseFloat(m.pledge || "0");
+      const paidTotal = parseFloat(m.paid_total || "0");
+      return paidTotal < pledge;
+    });
+    if (q) list = list.filter((m) => m.name.toLowerCase().includes(q) || (m.phone && m.phone.includes(q)));
     return list;
-  }, [data.members, search]);
+  }, [data?.members, search]);
 
   const handleSave = async (member: Member, amount: number) => {
     try {
+      console.log('[DailyCollection] Recording collection for member:', member.id, 'amount:', amount);
       await recordCollection({
         memberId: member.id,
         memberName: member.name,
@@ -141,8 +145,9 @@ export default function DailyCollectionScreen() {
       try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       setSavedIds((prev) => new Set(prev).add(member.id));
       setTotalSaved((prev) => prev + amount);
-    } catch {
-      Alert.alert("Error", "Failed to record collection");
+    } catch (error) {
+      console.error('[DailyCollection] Error recording collection:', error);
+      Alert.alert("Error", "Failed to record collection. Please check your connection.");
     }
   };
 
@@ -216,7 +221,7 @@ export default function DailyCollectionScreen() {
           <CollectionRow
             member={item}
             index={index + 1}
-            currency={data.organization.currency}
+            currency={org.currency}
             saved={savedIds.has(item.id)}
             onSave={(amount) => handleSave(item, amount)}
           />

@@ -26,25 +26,38 @@ export default function MembersScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { data, completeCount, incompleteCount, notStartedCount, refreshData } = useData();
+  const org = data?.organization || { currency: "TZS" };
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [refreshing, setRefreshing] = useState(false);
   const isNarrow = width < 380;
 
+  // TEMPORARY: Use mock data to verify UI works
+  const mockMembers = [
+    { id: "1", name: "John Doe", phone: "1234567890", pledge: "100000", paid_total: "50000", remaining: "50000", is_complete: false, is_incomplete: true, not_started: false },
+    { id: "2", name: "Jane Smith", phone: "0987654321", pledge: "150000", paid_total: "150000", remaining: "0", is_complete: true, is_incomplete: false, not_started: false },
+    { id: "3", name: "Bob Johnson", phone: "5555555555", pledge: "200000", paid_total: "0", remaining: "200000", is_complete: false, is_incomplete: false, not_started: true },
+  ];
+
+  const useMockData = false; // Set to false to use real data
+  const membersToUse = useMockData ? mockMembers : (data?.members || []);
+
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
 
   const filtered = useMemo(() => {
-    let list = data.members;
+    let list = membersToUse;
+    console.log('[Members] Total members before filter:', list.length, '(using mock data:', useMockData, ')');
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((m) => m.name.toLowerCase().includes(q) || m.phone.includes(q));
+      list = list.filter((m) => m.name.toLowerCase().includes(q) || (m.phone && m.phone.includes(q)));
     }
-    if (filter === "complete") list = list.filter((m) => m.paid >= m.target);
-    else if (filter === "incomplete") list = list.filter((m) => m.paid > 0 && m.paid < m.target);
-    else if (filter === "not_started") list = list.filter((m) => m.paid === 0);
+    if (filter === "complete") list = list.filter((m) => m.is_complete);
+    else if (filter === "incomplete") list = list.filter((m) => m.is_incomplete);
+    else if (filter === "not_started") list = list.filter((m) => m.not_started);
+    console.log('[Members] Filtered members count:', list.length, 'filter:', filter);
     return list;
-  }, [data.members, search, filter]);
+  }, [membersToUse, search, filter]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -53,7 +66,7 @@ export default function MembersScreen() {
   };
 
   const FILTERS: { key: FilterType; label: string; count: number; color: string }[] = [
-    { key: "all", label: "All", count: data.members.length, color: colors.primary },
+    { key: "all", label: "All", count: membersToUse.length, color: colors.primary },
     { key: "complete", label: "Complete", count: completeCount, color: colors.success },
     { key: "incomplete", label: "Partial", count: incompleteCount, color: colors.warning },
     { key: "not_started", label: "Not Started", count: notStartedCount, color: colors.destructive },
@@ -66,7 +79,7 @@ export default function MembersScreen() {
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
             <Text style={[styles.headerTitle, { fontSize: isNarrow ? 16 : 18 }]}>Members</Text>
-            <Text style={[styles.headerSub, { fontSize: isNarrow ? 11 : 12 }]}>{data.members.length} total members</Text>
+            <Text style={[styles.headerSub, { fontSize: isNarrow ? 11 : 12 }]}>{membersToUse.length} total members</Text>
           </View>
           <TouchableOpacity
             style={styles.addBtn}
@@ -133,7 +146,7 @@ export default function MembersScreen() {
 
       <FlatList
         data={filtered}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id?.toString()}
         contentContainerStyle={{ paddingHorizontal: isNarrow ? 12 : 14, paddingTop: 4, paddingBottom: bottomPad }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
@@ -146,14 +159,17 @@ export default function MembersScreen() {
             onAction={search ? undefined : () => router.push("/add-member")}
           />
         }
-        renderItem={({ item, index }) => (
-          <MemberRow
-            member={item}
-            index={index + 1}
-            currency={data.organization.currency}
-            onPress={() => router.push({ pathname: "/member/[id]", params: { id: item.id } })}
-          />
-        )}
+        renderItem={({ item, index }) => {
+          console.log('[Members] Rendering member:', item.name, 'id:', item.id);
+          return (
+            <MemberRow
+              member={item}
+              index={index + 1}
+              currency={org.currency}
+              onPress={() => router.push({ pathname: "/member/[id]", params: { id: item.id } })}
+            />
+          );
+        }}
       />
 
       {/* Daily collection FAB */}

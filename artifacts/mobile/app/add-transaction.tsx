@@ -25,8 +25,9 @@ export default function AddTransactionScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { data, addTransaction } = useData();
+  const org = data?.organization || { currency: "TZS" };
 
-  const [type, setType] = useState<TransactionType>("income");
+  const [type, setType] = useState<string>("member");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Contribution");
   const [description, setDescription] = useState("");
@@ -39,8 +40,8 @@ export default function AddTransactionScreen() {
   const bottomPad = Platform.OS === "web" ? 34 + 16 : insets.bottom + 16;
 
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-  const selectedMember = data.members.find((m) => m.id === memberId);
-  const filteredMembers = data.members.filter((m) =>
+  const selectedMember = data?.members?.find((m) => String(m.id) === String(memberId));
+  const filteredMembers = (data?.members || []).filter((m) =>
     m.name.toLowerCase().includes(memberSearch.toLowerCase())
   );
 
@@ -50,22 +51,24 @@ export default function AddTransactionScreen() {
       Alert.alert("Error", "Please enter a valid amount");
       return;
     }
+    if (!selectedMember) {
+      Alert.alert("Error", "Please select a member for this transaction");
+      return;
+    }
     setSaving(true);
     try {
+      console.log('[AddTransaction] Recording payment for member:', selectedMember.id);
       await addTransaction({
-        memberId: type === "income" ? memberId : null,
-        memberName: type === "income" ? (selectedMember?.name ?? null) : null,
-        type,
+        memberId: Number(selectedMember.id),
         amount: amountNum,
-        category,
-        description: description.trim() || category,
         date: new Date().toISOString().split("T")[0],
-        recordedBy: "staff",
+        note: description.trim() || "Payment from " + selectedMember.name,
       });
       try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       router.back();
-    } catch {
-      Alert.alert("Error", "Failed to save transaction");
+    } catch (error) {
+      console.error('[AddTransaction] Error saving transaction:', error);
+      Alert.alert("Error", "Failed to save transaction. Please check your connection.");
     } finally {
       setSaving(false);
     }
@@ -74,7 +77,7 @@ export default function AddTransactionScreen() {
   const TYPE_OPTIONS: { key: TransactionType; label: string; icon: string; color: string }[] = [
     { key: "income", label: "Income", icon: "trending-up", color: colors.success },
     { key: "expense", label: "Expense", icon: "trending-down", color: colors.destructive },
-    { key: "transfer", label: "Transfer", icon: "repeat", color: colors.info },
+    
   ];
 
   return (
@@ -131,9 +134,9 @@ export default function AddTransactionScreen() {
           </View>
 
           {/* Amount */}
-          <Text style={[styles.label, { color: colors.foreground }]}>Amount ({data.organization.currency})</Text>
+          <Text style={[styles.label, { color: colors.foreground }]}>Amount ({org.currency})</Text>
           <View style={[styles.amountWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.currencyLabel, { color: colors.primary }]}>{data.organization.currency}</Text>
+            <Text style={[styles.currencyLabel, { color: colors.primary }]}>{org.currency}</Text>
             <TextInput
               style={[styles.amountInput, { color: colors.foreground }]}
               value={amount}
@@ -201,7 +204,7 @@ export default function AddTransactionScreen() {
                   >
                     <Text style={[styles.memberOptionText, { color: colors.mutedForeground }]}>No member</Text>
                   </TouchableOpacity>
-                  {filteredMembers.slice(0, 10).map((m) => (
+                  {filteredMembers.map((m) => (
                     <TouchableOpacity
                       key={m.id}
                       onPress={() => { setMemberId(m.id); setShowMemberPicker(false); setMemberSearch(""); }}
@@ -210,7 +213,7 @@ export default function AddTransactionScreen() {
                     >
                       <Text style={[styles.memberOptionText, { color: colors.foreground }]}>{m.name}</Text>
                       <Text style={[styles.memberOptionSub, { color: colors.mutedForeground }]}>
-                        Remaining: {data.organization.currency} {(m.target - m.paid).toLocaleString()}
+                        Remaining: {org.currency} {(parseFloat(m.pledge || "0") - parseFloat(m.paid_total || "0")).toLocaleString()}
                       </Text>
                     </TouchableOpacity>
                   ))}

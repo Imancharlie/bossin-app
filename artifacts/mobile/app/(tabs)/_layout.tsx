@@ -25,9 +25,10 @@ export default function TabLayout() {
           paddingTop: 10,
         },
         tabBarLabelStyle: {
-          fontFamily: "Inter_500Medium",
-          fontSize: 11,
+          fontFamily: "Inter_600SemiBold",
+          fontSize: 12,
         },
+        tabBarActiveBackgroundColor: isIOS ? "transparent" : colors.primary + "08",
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
@@ -44,39 +45,91 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[styles.iconContainer, focused && styles.iconActive]}>
+              <Feather 
+                name="home" 
+                size={focused ? 24 : 22} 
+                color={focused ? colors.primary : color} 
+              />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="members"
         options={{
           title: "Members",
-          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[styles.iconContainer, focused && styles.iconActive]}>
+              <Feather 
+                name="users" 
+                size={focused ? 24 : 22} 
+                color={focused ? colors.primary : color} 
+              />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="transactions"
         options={{
           title: "Transactions",
-          tabBarIcon: ({ color }) => <Feather name="credit-card" size={22} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[styles.iconContainer, focused && styles.iconActive]}>
+              <Feather 
+                name="credit-card" 
+                size={focused ? 24 : 22} 
+                color={focused ? colors.primary : color} 
+              />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: "Reports",
-          tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={22} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[styles.iconContainer, focused && styles.iconActive]}>
+              <Feather 
+                name="bar-chart-2" 
+                size={focused ? 24 : 22} 
+                color={focused ? colors.primary : color} 
+              />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[styles.iconContainer, focused && styles.iconActive]}>
+              <Feather 
+                name="settings" 
+                size={focused ? 24 : 22} 
+                color={focused ? colors.primary : color} 
+              />
+            </View>
+          ),
         }}
       />
     </Tabs>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  iconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    transition: "all 0.2s ease",
+  },
+  iconActive: {
+    backgroundColor: "rgba(15, 118, 110, 0.1)",
+  },
+});

@@ -71,13 +71,19 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [refreshData]);
 
-  const recentTx = data.transactions.slice(0, 5);
-  const balance = totalCollected - totalExpenses;
-  const { organization: org } = data;
+  // Add safety checks for data
+  const recentTx = data?.transactions?.slice(0, 5) || [];
+  const org = data?.organization || { name: "Loading...", currency: "TZS" };
+  const dashboardStats = data?.dashboardStats || { total_pledged: "0", target_amount: "0", total_collected: "0" };
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 36 + 78 : 78 + insets.bottom;
   const hPad = isNarrow ? 14 : 16;
+
+  const totalPledged = parseFloat(dashboardStats?.total_pledged || "0");
+  const targetAmount = parseFloat(dashboardStats?.target_amount || "0");
+  const totalCollectedAmount = parseFloat(dashboardStats?.total_collected || "0");
+  const balance = totalCollectedAmount - totalExpenses;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -90,7 +96,7 @@ export default function DashboardScreen() {
           </View>
           <TouchableOpacity
             style={styles.notifBtn}
-            onPress={() => router.push("/daily-collection")}
+            onPress={() => router.push("/notifications")}
             activeOpacity={0.8}
           >
             <Feather name="bell" size={17} color="rgba(255,255,255,0.9)" />
@@ -99,14 +105,14 @@ export default function DashboardScreen() {
 
         {/* Balance + stat cards in header */}
         <View style={styles.balanceChip}>
-          <Text style={[styles.balanceLabel, { fontSize: isNarrow ? 9 : 10 }]}>CURRENT BALANCE</Text>
+          <Text style={[styles.balanceLabel, { fontSize: isNarrow ? 9 : 10 }]}>BALANCE</Text>
           <Text
             style={[styles.balanceValue, { fontSize: isNarrow ? 20 : 23 }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.6}
           >
-            {org.currency} {balance.toLocaleString()}
+            TZS {balance.toLocaleString()}
           </Text>
         </View>
       </Animated.View>
@@ -123,21 +129,15 @@ export default function DashboardScreen() {
         <View style={[styles.statRow, { gap: isNarrow ? 7 : 9, marginBottom: 10, marginTop: 12 }]}>
           <StatCard
             label="Total Collected"
-            value={`${org.currency} ${totalCollected.toLocaleString()}`}
+            value={`TZS ${totalCollectedAmount.toLocaleString()}`}
             color={colors.success}
             icon={<Feather name="trending-up" size={13} color={colors.success} />}
           />
           <StatCard
-            label="Expenses"
-            value={`${org.currency} ${totalExpenses.toLocaleString()}`}
-            color={colors.destructive}
-            icon={<Feather name="trending-down" size={13} color={colors.destructive} />}
-          />
-          <StatCard
-            label="Net Balance"
-            value={`${org.currency} ${balance.toLocaleString()}`}
-            color={balance >= 0 ? colors.primary : colors.warning}
-            icon={<Feather name="activity" size={13} color={balance >= 0 ? colors.primary : colors.warning} />}
+            label="Target Amount"
+            value={`TZS ${targetAmount.toLocaleString()}`}
+            color={colors.primary}
+            icon={<Feather name="target" size={13} color={colors.primary} />}
           />
         </View>
 
@@ -145,24 +145,24 @@ export default function DashboardScreen() {
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 10 }]}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: colors.foreground, fontSize: isNarrow ? 13 : 14 }]}>Mission Progress</Text>
-            <Text style={[styles.progressPct, { color: colors.primary, fontSize: isNarrow ? 15 : 17 }]}>{progress.toFixed(1)}%</Text>
+            <Text style={[styles.progressPct, { color: colors.primary, fontSize: isNarrow ? 15 : 17 }]}>{dashboardStats?.progress_percentage.toFixed(1) || 0}%</Text>
           </View>
-          <ProgressBar value={progress} color={colors.primary} bg={colors.muted} />
+          <ProgressBar value={dashboardStats?.progress_percentage || 0} color={colors.primary} bg={colors.muted} />
           <Text style={[styles.cardSub, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            {org.currency} {totalCollected.toLocaleString()} of {org.currency} {org.target.toLocaleString()} target
+            TZS {totalCollectedAmount.toLocaleString()} of TZS {targetAmount.toLocaleString()} target
           </Text>
           <View style={[styles.statChipRow, { marginTop: 10 }]}>
             <View style={styles.statChip}>
               <View style={[styles.dot, { backgroundColor: colors.success }]} />
-              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{completeCount} Done</Text>
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{dashboardStats?.complete_count || 0} Done</Text>
             </View>
             <View style={styles.statChip}>
               <View style={[styles.dot, { backgroundColor: colors.warning }]} />
-              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{data.members.filter(m => m.paid > 0 && m.paid < m.target).length} Partial</Text>
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{dashboardStats?.incomplete_count || 0} Partial</Text>
             </View>
             <View style={styles.statChip}>
               <View style={[styles.dot, { backgroundColor: colors.destructive }]} />
-              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{data.members.filter(m => m.paid === 0).length} Pending</Text>
+              <Text style={[styles.chipLabel, { color: colors.mutedForeground, fontSize: isNarrow ? 10 : 11 }]}>{dashboardStats?.not_paid_count || 0} Pending</Text>
             </View>
           </View>
         </View>
@@ -187,7 +187,7 @@ export default function DashboardScreen() {
             <EmptyState icon="credit-card" title="No transactions yet" subtitle="Transactions you record will appear here" />
           ) : (
             recentTx.map((tx) => (
-              <TransactionItem key={tx.id} transaction={tx} currency={org.currency} />
+              <TransactionItem key={tx.id} transaction={tx} currency="TZS" />
             ))
           )}
         </View>
