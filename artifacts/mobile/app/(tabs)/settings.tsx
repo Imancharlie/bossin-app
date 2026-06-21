@@ -79,9 +79,14 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           console.log('[Settings] Signing out...');
-          await logout();
-          console.log('[Settings] Navigating to login...');
-          router.replace("/login");
+          try {
+            await logout();
+            console.log('[Settings] Logout successful, navigating to login...');
+            router.replace("/login");
+          } catch (error) {
+            console.error('[Settings] Logout error:', error);
+            Alert.alert("Error", "Failed to sign out. Please try again.");
+          }
         },
       },
     ]);
@@ -215,8 +220,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 14, borderBottomWidth: 1 },
   rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   rowInfo: { flex: 1 },
-  rowLabel: { fontSize: 14, fontFamily: "Inter_500Medium", marginBottom: 1 },
-  rowSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  rowLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 1 },
+  rowSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
   editForm: { padding: 14, gap: 4 },
   fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 4, marginTop: 8 },
   input: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
