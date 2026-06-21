@@ -1,5 +1,5 @@
 [build]
-  command = "npx expo export --platform web"
+  command = "pnpm install && pnpm exec expo export -p web"
   publish = "dist"
 
 [[redirects]]
@@ -9,3 +9,4 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
