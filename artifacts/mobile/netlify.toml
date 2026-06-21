@@ -1,6 +1,6 @@
 [build]
-  command = "npx expo export -p web"
-  publish = "dist"
+  command = "cd artifacts/mobile && pnpm run export"
+  publish = "artifacts/mobile/dist"
 
 [[redirects]]
   from = "/*"
